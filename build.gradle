@@ -1,0 +1,55 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '3.3.4'
+    id 'io.spring.dependency-management' version '1.1.6'
+}
+
+group = 'az.ady'
+version = '0.0.1-SNAPSHOT'
+description = 'Fuel theft and refueling detection microservice'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+ext {
+    poiVersion = '5.3.0'
+    springdocVersion = '2.6.0'
+}
+
+dependencies {
+    // Web / validation
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+
+    // Observability
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+
+    // API documentation
+    implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:${springdocVersion}"
+
+    // Excel parsing
+    implementation "org.apache.poi:poi-ooxml:${poiVersion}"
+
+    // Lombok
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+}
+
+// 1M-sample performance benchmark; heap pinned to the 512 MB requirement.
+tasks.register('benchmark', JavaExec) {
+    group = 'verification'
+    description = 'Runs the 1M-sample detection benchmark under a 512 MB heap'
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'az.ady.fuelfraud.benchmark.DetectionBenchmark'
+    maxHeapSize = '512m'
+    if (project.hasProperty('samples')) {
+        args project.property('samples')
+    }
+}

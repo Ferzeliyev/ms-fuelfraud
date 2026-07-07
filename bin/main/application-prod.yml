@@ -1,0 +1,9 @@
+server:
+  tomcat:
+    threads:
+      max: 200
+      min-spare: 20
+
+springdoc:
+  swagger-ui:
+    enabled: false

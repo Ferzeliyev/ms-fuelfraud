@@ -1,0 +1,54 @@
+spring:
+  application:
+    name: ms-fuelfraud
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
+  servlet:
+    multipart:
+      max-file-size: 25MB
+      max-request-size: 25MB
+  jackson:
+    default-property-inclusion: non_null
+    serialization:
+      write-dates-as-timestamps: false
+
+server:
+  port: ${SERVER_PORT:8090}
+  error:
+    include-message: always
+    include-binding-errors: always
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: when_authorized
+  info:
+    env:
+      enabled: true
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: method
+
+# Binds to az.ady.fuelfraud.config.FuelFraudProperties (flat keys, prefix `fuelfraud`).
+# Values mirror the validated Java defaults; tune per environment as needed.
+fuelfraud:
+  # adaptive threshold (AdaptiveThresholdCalculator)
+  noise-tolerance: 0.5      # |delta| at or below this (L) is discarded as sensor noise before binning
+  histogram-bin-count: 0    # 0 = automatic (sqrt(n) rule, min 10)
+  min-gap-fraction: 0.2     # minimal share of the histogram range the noise/event gap must span
+  min-threshold: 1.0        # lower clamp for the adaptive threshold (L)
+  max-threshold: 100.0      # upper clamp for the adaptive threshold (L)
+  # noise filters + FSM strategy (StatefulFuelEventDetector only)
+  median-size: 5            # median filter window (odd; 1 = off)
+  window-size: 5            # moving-average filter window (1 = off)
+  stability-window-size: 15
+  start-sensitivity-sigma: 3.0
+  stability-sigma: 2.0
