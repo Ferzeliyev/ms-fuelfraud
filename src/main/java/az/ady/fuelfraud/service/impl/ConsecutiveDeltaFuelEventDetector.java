@@ -56,20 +56,13 @@ public class ConsecutiveDeltaFuelEventDetector implements FuelEventDetector {
     private List<DetectedEvent> detectEvents(String sheetName, double[] levels,
                                              double[] deltas, double threshold) {
         List<DetectedEvent> events = new ArrayList<>();
-        int i = 0;
-        while (i < deltas.length) {
+        for (int i = 0; i < deltas.length; i++) {
             int direction = classify(deltas[i], threshold);
             if (direction == 0) {
-                i++;
                 continue;
             }
-            int runEnd = i;
-            while (runEnd + 1 < deltas.length && classify(deltas[runEnd + 1], threshold) == direction) {
-                runEnd++;
-            }
-            events.add(buildEvent(sheetName, levels, i, runEnd + 1, threshold,
+            events.add(buildEvent(sheetName, levels, i, i + 1, threshold,
                     direction > 0 ? FuelEventType.REFUEL : FuelEventType.THEFT));
-            i = runEnd + 1;
         }
         return events;
     }

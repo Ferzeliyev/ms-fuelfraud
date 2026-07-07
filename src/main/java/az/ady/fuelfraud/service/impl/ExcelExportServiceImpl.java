@@ -8,23 +8,20 @@ import az.ady.fuelfraud.exception.ExcelExportException;
 import az.ady.fuelfraud.service.ExcelExportService;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
-import org.apache.poi.ss.usermodel.ConditionalFormattingRule;
 import org.apache.poi.ss.usermodel.FillPatternType;
 import org.apache.poi.ss.usermodel.Font;
 import org.apache.poi.ss.usermodel.IndexedColors;
-import org.apache.poi.ss.usermodel.PatternFormatting;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
-import org.apache.poi.ss.usermodel.SheetConditionalFormatting;
 import org.apache.poi.ss.usermodel.Workbook;
-import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class ExcelExportServiceImpl implements ExcelExportService {
@@ -52,7 +49,6 @@ public class ExcelExportServiceImpl implements ExcelExportService {
                 writeWorksheet(workbook, styles, results.get(s), sheets.get(s));
             }
             fillSummary(summarySheet, styles, sheets, results);
-
 
             workbook.setForceFormulaRecalculation(true);
             workbook.write(out);
@@ -83,43 +79,41 @@ public class ExcelExportServiceImpl implements ExcelExportService {
 
         int[] rowNumbers = series.rowNumbers();
         double[] levels = series.levels();
+        Map<Integer, FuelEventType> eventRows = eventRows(result.events(), levels.length);
 
         for (int i = 0; i < levels.length; i++) {
-            int excelRow = i + 2; // 1-based position of this data row in the sheet
+            int excelRow = i + 2;
+            FuelEventType eventType = eventRows.get(i);
+            boolean eventRow = eventType != null;
+            boolean refuel = eventType == FuelEventType.REFUEL;
             Row row = sheet.createRow(i + 1);
-            numberCell(row, 0, rowNumbers[i], styles.integer);
-            numberCell(row, 1, levels[i], styles.number);
+
+            numberCell(row, 0, rowNumbers[i], eventRow ? styles.integer(refuel) : styles.integer);
+            numberCell(row, 1, levels[i], eventRow ? styles.number(refuel) : styles.number);
             if (i > 0) {
-                formulaCell(row, 2, "B%d-B%d".formatted(excelRow, excelRow - 1), styles.number);
-                // A threshold of 0 means "no noise/event separation found" — classify
-                // nothing rather than labelling every nonzero delta as an event.
-                formulaCell(row, 3,
-                        "IF($G$1<=0,\"\",IF(C%1$d>$G$1,\"%2$s\",IF(C%1$d<(-$G$1),\"%3$s\",\"\")))"
-                                .formatted(excelRow, LABEL_REFUEL, LABEL_THEFT),
-                        styles.text);
+                formulaCell(row, 2, "B%d-B%d".formatted(excelRow, excelRow - 1),
+                        eventRow ? styles.number(refuel) : styles.number);
             } else {
-                blankCell(row, 2, styles.number);
-                blankCell(row, 3, styles.text);
+                blankCell(row, 2, eventRow ? styles.number(refuel) : styles.number);
+            }
+            textCell(row, 3, eventRow ? labelFor(eventType) : "",
+                    eventRow ? styles.text(refuel) : styles.text);
+        }
+    }
+
+    private Map<Integer, FuelEventType> eventRows(List<DetectedEvent> events, int rowCount) {
+        Map<Integer, FuelEventType> rows = new HashMap<>();
+        if (rowCount <= 0) {
+            return rows;
+        }
+        for (DetectedEvent event : events) {
+            int from = Math.max(0, Math.min(event.startIndex() + 1, rowCount - 1));
+            int to = Math.max(0, Math.min(event.endIndex(), rowCount - 1));
+            for (int i = from; i <= to; i++) {
+                rows.put(i, event.type());
             }
         }
-
-        applyEventHighlighting(sheet, levels.length);
-    }
-    private void applyEventHighlighting(Sheet sheet, int rowCount) {
-        SheetConditionalFormatting formatting = sheet.getSheetConditionalFormatting();
-
-        ConditionalFormattingRule refuel = formatting.createConditionalFormattingRule("AND($G$1>0,$C2>$G$1)");
-        PatternFormatting refuelFill = refuel.createPatternFormatting();
-        refuelFill.setFillBackgroundColor(IndexedColors.LIGHT_GREEN.getIndex());
-        refuelFill.setFillPattern(PatternFormatting.SOLID_FOREGROUND);
-
-        ConditionalFormattingRule theft = formatting.createConditionalFormattingRule("AND($G$1>0,$C2<(-$G$1))");
-        PatternFormatting theftFill = theft.createPatternFormatting();
-        theftFill.setFillBackgroundColor(IndexedColors.ROSE.getIndex());
-        theftFill.setFillPattern(PatternFormatting.SOLID_FOREGROUND);
-
-        CellRangeAddress[] dataRows = {CellRangeAddress.valueOf("A2:D" + (rowCount + 1))};
-        formatting.addConditionalFormatting(dataRows, refuel, theft);
+        return rows;
     }
 
     private void fillSummary(Sheet sheet, Styles styles, List<MeasurementSeries> sheets,
@@ -145,8 +139,8 @@ public class ExcelExportServiceImpl implements ExcelExportService {
                 numberCell(row, 2, series.rowNumberAt(event.endIndex()), styles.integer(refuel));
                 numberCell(row, 3, event.startFuel(), styles.number(refuel));
                 numberCell(row, 4, event.endFuel(), styles.number(refuel));
-                textCell(row, 5, refuel ? LABEL_REFUEL : LABEL_THEFT, styles.text(refuel));
-                numberCell(row, 6, event.volumeLiters(), styles.number(refuel));
+                textCell(row, 5, labelFor(event.type()), styles.text(refuel));
+                numberCell(row, 6, event.fuelDifference(), styles.number(refuel));
             }
         }
     }
@@ -171,6 +165,10 @@ public class ExcelExportServiceImpl implements ExcelExportService {
         Cell cell = row.createCell(column);
         cell.setCellStyle(style);
         cell.setCellValue(value);
+    }
+
+    private String labelFor(FuelEventType type) {
+        return type == FuelEventType.REFUEL ? LABEL_REFUEL : LABEL_THEFT;
     }
 
     private String uniqueSheetName(Workbook workbook, String baseName) {
