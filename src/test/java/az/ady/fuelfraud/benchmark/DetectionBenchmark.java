@@ -43,7 +43,6 @@ public final class DetectionBenchmark {
 
         double[] levels = syntheticSeries(samples);
 
-        // Warm up the JIT on a smaller series before measuring.
         double[] warmup = syntheticSeries(Math.min(200_000, samples));
         for (int i = 0; i < 3; i++) {
             detector.analyze("warmup", warmup);
@@ -52,8 +51,6 @@ public final class DetectionBenchmark {
         benchmarkDetection(detector, levels);
         benchmarkEndToEnd(detector, levels);
     }
-
-    // ------------------------------------------------------------- scenarios
 
     private static void benchmarkDetection(ConsecutiveDeltaFuelEventDetector detector, double[] levels) {
         System.out.printf("%n--- Detection only (threshold + consecutive-delta detector) ---%n");
@@ -120,12 +117,6 @@ public final class DetectionBenchmark {
                 label, elapsedMs, budgetMs, elapsedMs <= budgetMs ? "PASS" : "FAIL");
     }
 
-    // ------------------------------------------------------------- test data
-
-    /**
-     * Synthetic 1M-sample series: stable plateaus with sensor noise, interrupted by
-     * sudden refuels, sudden thefts and one gradual theft spread over many samples.
-     */
     private static double[] syntheticSeries(int samples) {
         Random random = new Random(42);
         double[] levels = new double[samples];
@@ -134,11 +125,11 @@ public final class DetectionBenchmark {
         for (int i = 0; i < samples; i++) {
             int phase = i % 100_000;
             if (phase == 20_000) {
-                level += 120.0; // sudden refuel
+                level += 120.0; 
             } else if (phase >= 50_000 && phase < 50_003) {
-                level -= 15.0;  // sudden theft over 3 samples
+                level -= 15.0;  
             } else if (phase >= 80_000 && phase < 80_400) {
-                level -= 0.1;   // gradual theft: -40 L over 400 samples
+                level -= 0.1;   
             }
             level = Math.max(0.0, level);
             levels[i] = level + (random.nextDouble() - 0.5) * 0.6;
@@ -146,7 +137,6 @@ public final class DetectionBenchmark {
         return levels;
     }
 
-    /** Writes the series as a single-column, single-sheet xlsx via streaming POI. */
     private static long writeWorkbook(File target, double[] levels) throws IOException {
         SXSSFWorkbook workbook = new SXSSFWorkbook(256);
         try (FileOutputStream out = new FileOutputStream(target)) {
@@ -163,9 +153,6 @@ public final class DetectionBenchmark {
         return target.length();
     }
 
-    // -------------------------------------------------------------- plumbing
-
-    /** Samples the used heap every few milliseconds and remembers the peak. */
     private static final class PeakMemorySampler {
 
         private final Thread thread;
@@ -195,7 +182,6 @@ public final class DetectionBenchmark {
         }
     }
 
-    /** Minimal read-only {@link MultipartFile} over a local file, for benchmarking. */
     private record FileBackedMultipartFile(File file) implements MultipartFile {
 
         @Override

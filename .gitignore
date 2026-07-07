@@ -1,9 +1,6 @@
-# Gradle
 .gradle/
 build/
 !gradle/wrapper/gradle-wrapper.jar
-
-# IDE
 .idea/
 .claude/
 *.iml
@@ -11,14 +8,8 @@ build/
 .settings/
 .classpath
 .project
-
-# OS
 .DS_Store
 Thumbs.db
-
-# Logs
 *.log
 logs/
-
-# Env
 *.env

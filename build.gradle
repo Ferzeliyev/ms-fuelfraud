@@ -24,25 +24,14 @@ ext {
 }
 
 dependencies {
-    // Web / validation
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
-
-    // Observability
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
-
-    // API documentation
     implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:${springdocVersion}"
-
-    // Excel parsing
     implementation "org.apache.poi:poi-ooxml:${poiVersion}"
-
-    // Lombok
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
 }
-
-// 1M-sample performance benchmark; heap pinned to the 512 MB requirement.
 tasks.register('benchmark', JavaExec) {
     group = 'verification'
     description = 'Runs the 1M-sample detection benchmark under a 512 MB heap'

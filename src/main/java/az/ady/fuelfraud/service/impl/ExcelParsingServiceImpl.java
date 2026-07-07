@@ -35,25 +35,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
-/**
- * Apache POI based Excel reader.
- *
- * <ul>
- *     <li><b>Streams xlsx</b> — worksheets are read via the SAX event API
- *     ({@link XSSFReader}), so the workbook DOM is never materialised and memory
- *     stays flat regardless of row count (multi-million-row sheets included);</li>
- *     <li><b>supports legacy xls</b> via the DOM reader (the format itself is capped
- *     at 65k rows, so streaming brings nothing there);</li>
- *     <li><b>supports multiple sheets</b> — every worksheet is read independently;</li>
- *     <li><b>reads numeric values</b> from the measurement column — always column A (numeric cells,
- *     cached numeric formula results, and numeric text with dot or comma separator);</li>
- *     <li><b>ignores empty rows</b> silently;</li>
- *     <li><b>ignores invalid cells</b> (non-numeric text, negative, NaN/Infinity) —
- *     counted and logged, never propagated;</li>
- *     <li><b>collects into primitive arrays</b> ({@link MeasurementSeries}) — no
- *     per-measurement objects are allocated.</li>
- * </ul>
- */
 @Slf4j
 @Service
 public class ExcelParsingServiceImpl implements ExcelParsingService {
@@ -85,8 +66,7 @@ public class ExcelParsingServiceImpl implements ExcelParsingService {
         } catch (ExcelParsingException ex) {
             throw ex;
         } catch (Exception ex) {
-            // Covers IOException plus POI's unchecked failures (encrypted, legacy
-            // BIFF5, corrupt records, misnamed formats) from both reader paths.
+
             throw new ExcelParsingException("Failed to read the uploaded workbook", ex);
         }
     }
@@ -141,13 +121,13 @@ public class ExcelParsingServiceImpl implements ExcelParsingService {
 
         @Override
         public void endRow(int rowNum) {
-            // empty rows never report cells — ignored by design
+
         }
 
         @Override
         public void cell(String cellReference, String formattedValue, XSSFComment comment) {
             if (cellReference != null && new CellReference(cellReference).getCol() != 0) {
-                return; // the measurement column is A; stray cells elsewhere are not readings
+                return; 
             }
             if (cellSeenInRow) {
                 return;
@@ -158,7 +138,7 @@ public class ExcelParsingServiceImpl implements ExcelParsingService {
             if (isValidFuelLevel(value)) {
                 builder.add(currentRow + 1, value);
             } else if (builder.size() > 0 || !Double.isNaN(value)) {
-                // Tolerate a header row before any data; count everything else as invalid.
+
                 invalidCells++;
             }
         }
@@ -172,7 +152,7 @@ public class ExcelParsingServiceImpl implements ExcelParsingService {
                 for (Row row : sheet) {
                     Cell cell = measurementCell(row);
                     if (cell == null) {
-                        continue; // empty measurement column — ignored
+                        continue; 
                     }
                     collector.startRow(row.getRowNum());
                     collector.cell(null, readCellValue(cell), null);
@@ -185,9 +165,9 @@ public class ExcelParsingServiceImpl implements ExcelParsingService {
 
     private Cell measurementCell(Row row) {
         if (row == null) {
-            return null; // physically empty row
+            return null; 
         }
-        // The measurement column is A; stray values in other columns are not readings.
+
         return row.getCell(0, Row.MissingCellPolicy.RETURN_BLANK_AS_NULL);
     }
 

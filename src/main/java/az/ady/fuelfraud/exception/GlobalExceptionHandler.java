@@ -60,9 +60,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiError> handleUnexpected(Exception ex, HttpServletRequest request) {
         if (ex instanceof ErrorResponse errorResponse) {
-            // Spring MVC exceptions (415 unsupported media type, 405 method not
-            // allowed, 404 no resource, ...) carry their own status — keep it
-            // instead of collapsing them into a 500.
+
             HttpStatus status = HttpStatus.valueOf(errorResponse.getStatusCode().value());
             String detail = errorResponse.getBody().getDetail();
             return build(status, StringUtils.hasText(detail) ? detail : status.getReasonPhrase(),

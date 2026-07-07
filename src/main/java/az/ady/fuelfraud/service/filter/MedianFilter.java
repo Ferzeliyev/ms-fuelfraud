@@ -27,8 +27,7 @@ public class MedianFilter implements NoiseFilter {
         int half = window / 2;
 
         double[] result = new double[size];
-        // The centred slice spans up to 2*half+1 samples, which exceeds `window`
-        // by one when the configured window is even.
+
         double[] scratch = new double[2 * half + 1];
 
         for (int i = 0; i < size; i++) {

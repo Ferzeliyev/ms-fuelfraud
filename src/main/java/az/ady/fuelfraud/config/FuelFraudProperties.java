@@ -35,19 +35,15 @@ public class FuelFraudProperties {
     @Min(0)
     private int histogramBinCount = 0;
 
-
     @DecimalMin("0.0")
     @DecimalMax("1.0")
     private double minGapFraction = 0.2;
 
-
     @Min(2)
     private int stabilityWindowSize = 15;
 
-
     @Positive
     private double startSensitivitySigma = 3.0;
-
 
     @Positive
     private double stabilitySigma = 2.0;

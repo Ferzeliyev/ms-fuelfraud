@@ -13,15 +13,10 @@ public final class FuelMathUtils {
 
     private static final int MIN_AUTO_BINS = 10;
 
-    /**
-     * Rounds to 2 decimals — the precision written into the exported workbook's
-     * threshold cell (G1), so every layer classifies identically.
-     */
     public static double round2(double value) {
         return Math.round(value * 100.0) / 100.0;
     }
 
-    /** Consecutive-row differences: {@code deltas[i] = levels[i + 1] - levels[i]}. */
     public static double[] deltas(double[] levels) {
         double[] deltas = new double[levels.length - 1];
         for (int i = 1; i < levels.length; i++) {
@@ -84,14 +79,6 @@ public final class FuelMathUtils {
         return OptionalDouble.of(thresholdCenter);
     }
 
-    /**
-     * Largest run of empty bins that is followed by an occupied bin. The run may
-     * start at bin 0: sub-tolerance noise deltas were filtered out before binning,
-     * so the noise cluster conceptually sits below the histogram range and a
-     * leading empty run is a genuine noise/event gap (e.g. a sheet whose only
-     * significant delta is one large theft). A trailing run — nothing occupied
-     * above it — is never a gap.
-     */
     private static int[] largestEmptyRunBelowOccupied(int[] histogram) {
         int bestStart = -1;
         int bestLength = 0;

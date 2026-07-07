@@ -41,7 +41,6 @@ public class ConsecutiveDeltaFuelEventDetector implements FuelEventDetector {
                     noiseMovements, List.of());
         }
 
-
         double threshold = FuelMathUtils.round2(calculated.getAsDouble());
         List<DetectedEvent> events = detectEvents(sheetName, fuelLevels, deltas, threshold);
         int noiseMovements = countSubThreshold(deltas, threshold);
@@ -51,7 +50,6 @@ public class ConsecutiveDeltaFuelEventDetector implements FuelEventDetector {
         return new DetectionResult(sheetName, count, threshold, FuelMathUtils.round2(noiseSigma),
                 noiseMovements, events);
     }
-
 
     private List<DetectedEvent> detectEvents(String sheetName, double[] levels,
                                              double[] deltas, double threshold) {
@@ -67,7 +65,6 @@ public class ConsecutiveDeltaFuelEventDetector implements FuelEventDetector {
         return events;
     }
 
-    /** @return {@code +1} refuel direction, {@code -1} theft direction, {@code 0} noise (ignored). */
     private int classify(double delta, double threshold) {
         if (delta > threshold) {
             return 1;
@@ -88,7 +85,6 @@ public class ConsecutiveDeltaFuelEventDetector implements FuelEventDetector {
                 FuelMathUtils.round2(difference), FuelMathUtils.round2(threshold),
                 confidenceScore(Math.abs(difference), threshold));
     }
-
 
     private double confidenceScore(double volume, double threshold) {
         if (threshold <= 0.0) {

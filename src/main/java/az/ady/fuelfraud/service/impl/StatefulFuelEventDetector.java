@@ -164,7 +164,6 @@ public class StatefulFuelEventDetector implements FuelEventDetector {
                 confidenceScore(Math.abs(difference), minVolume));
     }
 
-
     private boolean isSettled(double[] levels, int i, int window, double tolerance) {
         if (i + 1 < 2 * window || !isStable(levels, i, window, tolerance)) {
             return false;

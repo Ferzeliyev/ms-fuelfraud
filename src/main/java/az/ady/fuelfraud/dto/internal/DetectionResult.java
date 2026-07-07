@@ -5,17 +5,6 @@ import az.ady.fuelfraud.util.FuelMathUtils;
 
 import java.util.List;
 
-/**
- * Full outcome of analysing one worksheet: the calculated threshold, the noise
- * characteristics of the signal and the detected events.
- *
- * @param sheetName           worksheet analysed
- * @param measurementCount    number of valid readings in the worksheet
- * @param thresholdLiters     event threshold calculated for this worksheet (litres)
- * @param noiseLevelLiters    robust estimate of the sensor noise sigma (litres)
- * @param noiseMovementCount  sub-threshold direction reversals attributed to noise
- * @param events              detected refuel/theft events, in chronological order
- */
 public record DetectionResult(
         String sheetName,
         int measurementCount,
